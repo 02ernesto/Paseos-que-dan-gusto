@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paseos que Transforman | Paseador de perros</title>
+<title>Paseos que Transforman con Cristian | Paseador de perros</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -521,7 +521,7 @@
 
 <nav class="nav">
   <div class="wrap">
-    <div class="brand"><span class="dot"></span> Paseos que Transforman</div>
+    <div class="brand"><span class="dot"></span> Paseos que Transforman con Cristian</div>
     <a class="nav-cta" href="https://wa.me/525522048026" target="_blank" rel="noopener">WhatsApp 55 2204 8026</a>
   </div>
 </nav>
@@ -805,10 +805,15 @@
     grande: { media: 100, hora: 150 }
   };
 
-  let state = { size: 'chico', duration: 'media' };
+  let dogCount = 1;
+  const dogs = {
+    1: { size: 'chico', duration: 'media' },
+    2: { size: 'chico', duration: 'media' },
+    3: { size: 'chico', duration: 'media' }
+  };
 
-  const sizeToggle = document.getElementById('sizeToggle');
-  const durationToggle = document.getElementById('durationToggle');
+  const dogCountToggle = document.getElementById('dogCountToggle');
+  const dogsWrap = document.getElementById('dogsWrap');
   const daysSlider = document.getElementById('daysSlider');
   const daysValue = document.getElementById('daysValue');
 
@@ -820,20 +825,38 @@
     });
   }
 
-  sizeToggle.addEventListener('click', e=>{
+  dogCountToggle.addEventListener('click', e=>{
     const t = e.target.closest('.toggle');
     if(!t) return;
-    state.size = t.dataset.size;
-    setActive(sizeToggle, 'size', state.size);
+    dogCount = parseInt(t.dataset.count, 10);
+    setActive(dogCountToggle, 'count', String(dogCount));
+    dogsWrap.querySelectorAll('.dog-panel').forEach(panel=>{
+      const n = parseInt(panel.dataset.dog, 10);
+      panel.style.display = n <= dogCount ? '' : 'none';
+    });
     calculate();
   });
 
-  durationToggle.addEventListener('click', e=>{
-    const t = e.target.closest('.toggle');
-    if(!t) return;
-    state.duration = t.dataset.duration;
-    setActive(durationToggle, 'duration', state.duration);
-    calculate();
+  dogsWrap.querySelectorAll('.size-toggle').forEach(container=>{
+    container.addEventListener('click', e=>{
+      const t = e.target.closest('.toggle');
+      if(!t) return;
+      const dogNum = container.dataset.dog;
+      dogs[dogNum].size = t.dataset.size;
+      setActive(container, 'size', dogs[dogNum].size);
+      calculate();
+    });
+  });
+
+  dogsWrap.querySelectorAll('.duration-toggle').forEach(container=>{
+    container.addEventListener('click', e=>{
+      const t = e.target.closest('.toggle');
+      if(!t) return;
+      const dogNum = container.dataset.dog;
+      dogs[dogNum].duration = t.dataset.duration;
+      setActive(container, 'duration', dogs[dogNum].duration);
+      calculate();
+    });
   });
 
   daysSlider.addEventListener('input', calculate);
@@ -842,15 +865,24 @@
     const days = parseInt(daysSlider.value, 10);
     daysValue.textContent = days;
 
-    const perWalk = rates[state.size][state.duration];
+    let perWalk = 0;
+    const details = [];
+    for(let i = 1; i <= dogCount; i++){
+      const d = dogs[i];
+      const price = rates[d.size][d.duration];
+      perWalk += price;
+      details.push(`${d.size === 'chico' ? 'chico/mediano' : 'grande'} (${d.duration === 'media' ? 'media hora' : '1 hora'})`);
+    }
+
     const subtotal = perWalk * days;
     const eligible = days >= 20;
     const discount = eligible ? Math.round(subtotal * 0.10) : 0;
     const total = subtotal - discount;
 
     document.getElementById('totalPrice').textContent = total.toLocaleString('es-MX', {maximumFractionDigits:0});
-    document.getElementById('perWalkSub').textContent = `${fmt(perWalk)} por paseo · ${days} paseo${days===1?'':'s'}`;
+    document.getElementById('perWalkSub').textContent = `${fmt(perWalk)} por paseo (${dogCount} perrito${dogCount===1?'':'s'}) · ${days} paseo${days===1?'':'s'}`;
 
+    document.getElementById('rowPerWalkLabel').textContent = dogCount === 1 ? 'Precio por paseo' : `Precio por paseo (${dogCount} perritos)`;
     document.getElementById('rowPerWalk').textContent = fmt(perWalk);
     document.getElementById('rowDays').textContent = days;
     document.getElementById('rowSubtotal').textContent = fmt(subtotal);
@@ -873,9 +905,8 @@
       note.textContent = `Llega a 20 días al mes y obtén 10% de descuento (te faltan ${faltan}) 🎉`;
     }
 
-    const sizeLabel = state.size === 'chico' ? 'chico/mediano' : 'grande';
-    const durLabel = state.duration === 'media' ? 'media hora' : '1 hora';
-    const msg = `Hola, me interesa cotizar paseos para mi perro (${sizeLabel}, ${durLabel}) por ${days} días al mes. Según la calculadora, el total sería ${fmt(total)}${eligible ? ' (con 10% de descuento aplicado)' : ''}. ¿Me pueden confirmar disponibilidad?`;
+    const dogsLabel = dogCount === 1 ? '1 perrito' : `${dogCount} perritos`;
+    const msg = `Hola, me interesa cotizar paseos para ${dogsLabel} (${details.join(', ')}) por ${days} días al mes. Según la calculadora, el total sería ${fmt(total)}${eligible ? ' (con 10% de descuento aplicado)' : ''}. ¿Me pueden confirmar disponibilidad?`;
     document.getElementById('waCalcBtn').href = 'https://wa.me/525522048026?text=' + encodeURIComponent(msg);
   }
 
